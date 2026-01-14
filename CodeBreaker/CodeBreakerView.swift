@@ -31,12 +31,6 @@ struct CodeBreakerView: View {
     }
 }
 
-enum Match {
-    case nomatch
-    case exact
-    case inexact
-}
-
 
 #Preview {
     CodeBreakerView()
