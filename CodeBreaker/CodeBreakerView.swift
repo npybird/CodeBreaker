@@ -8,25 +8,60 @@
 import SwiftUI
 
 struct CodeBreakerView: View {
+    @State var game: CodeBreaker = CodeBreaker()
+    
     var body: some View {
         VStack {
-            pegs(colors: [.red, .black, .green, .yellow])
-            pegs(colors: [.accentColor, .green, .green, .purple])
-            pegs(colors: [.brown, .cyan, .yellow, .pink])
-            pegs(colors: [.yellow, .orange, .purple, .blue])
+            view(for: game.masterCode)
+                .opacity(0)
+            view(for: game.guess)
+            ScrollView {
+                ForEach(game.attempts.indices.reversed(), id: \.self) { index in
+                    view(for: game.attempts[index])
+                }
+            }
         }
         .padding()
     }
     
-    func pegs(colors: [Color]) -> some View {
+    var guessButton: some View {
+        Button("Guess") {
+            withAnimation {
+                game.attemptGuess()
+            }
+        }
+        .font(.system(size: 80))
+        .minimumScaleFactor(0.1)
+    }
+    
+    func view(for code: Code) -> some View {
         return HStack {
-            ForEach(colors.indices, id: \.self) { index in
-                RoundedRectangle(cornerRadius: 20)
+            ForEach(code.pegs.indices, id: \.self) { index in
+                RoundedRectangle(cornerRadius: 10)
+                    .overlay {
+                        if code.pegs[index] == Code.missing {
+                            RoundedRectangle(cornerRadius: 10)
+                                .strokeBorder(.gray)
+                        } else {
+                            Text("")
+                        }
+                    }
+                    .contentShape(RoundedRectangle(cornerRadius: 10))
                     .aspectRatio(1, contentMode: .fit)
-                    .foregroundStyle(colors[index])
+                    .foregroundStyle(code.pegs[index])
+                    .onTapGesture {
+                        if code.kind == .guess {
+                            game.changeGuessPeg(at: index)
+                        }
+                    }
             }
             
-            MatchMarkers(matches: [.exact, .inexact, .nomatch, .exact])
+            MatchMarkers(matches: code.matches)
+                .overlay {
+                    if code.kind == .guess {
+                        guessButton
+                    }
+                }
         }
     }
 }
