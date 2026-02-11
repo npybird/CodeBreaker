@@ -9,8 +9,6 @@ import SwiftUI
 
 typealias Peg = Color
 
-//let emoji String = "🥵"
-
 struct CodeBreaker {
     var masterCode: Code = Code(kind: .master)
     var guess: Code = Code(kind: .guess, pegs: [Code.missing, Code.missing, Code.missing, Code.missing])
@@ -20,7 +18,12 @@ struct CodeBreaker {
     
     init() {
         masterCode.randomize(from: pegChoices)
-        print(masterCode.pegs)
+    }
+    
+    mutating func restart() {
+        masterCode.randomize(from: pegChoices)
+        guess.reset()
+        attempts.removeAll()
     }
     
     var isOver: Bool {

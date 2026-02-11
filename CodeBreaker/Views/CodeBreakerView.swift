@@ -11,26 +11,50 @@ struct CodeBreakerView: View {
     // MARK: Data Owned by Me
     @State private var game: CodeBreaker = CodeBreaker()
     @State private var selection: Int = 0
+    @State private var restarting = false
     
     // MARK: - body
     var body: some View {
         VStack {
-            if game.isOver {
-                view(for: game.masterCode)
-            }
-//            view(for: game.masterCode)
-//                .opacity(game.isOver ? 1 : 0)
-            if !game.isOver {
-                view(for: game.guess)
-            }
-            ScrollView {
-                ForEach(game.attempts.indices.reversed(), id: \.self) { index in
-                    view(for: game.attempts[index])
+            Button("Restart") {
+                withAnimation(.easeInOut(duration: 3)) {    // animation แบบ explicit (ทำทันที)
+                    restarting = true
+                    game.restart()
+                } completion: {     // เมื่อทำ animation เสร็จ
+                    restarting = false
                 }
             }
-            PegChooserView(choices: game.pegChoices) { peg in
-                game.setGuessPeg(peg, at: selection)
-                selection = (selection + 1) % game.guess.pegs.count
+            
+            CodeView(code: game.masterCode)
+                .opacity(game.isOver ? 1 : 0)
+            
+            if !game.isOver {
+                CodeView(code: game.guess, selection: $selection) {
+                    guessButton
+                }
+                .animation(nil, value: game.attempts.count)
+                .opacity(restarting ? 0 : 1)
+            }
+                
+            ScrollView {
+                ForEach(game.attempts.indices.reversed(), id: \.self) { index in
+                    CodeView(code: game.attempts[index]) {
+                        MatchMarkers(matches: game.attempts[index].matches)
+                    }
+                    .transition(
+                        AnyTransition.asymmetric(
+                            insertion: game.isOver ? .opacity : .move(edge: .top),
+                            removal: .move(edge: .trailing))
+                    )
+                }
+            }
+            
+            if !game.isOver {
+                PegChooserView(choices: game.pegChoices) { peg in
+                    game.setGuessPeg(peg, at: selection)
+                    selection = (selection + 1) % game.guess.pegs.count
+                }
+                .transition(AnyTransition.offset(x: 0, y: 250))     // animation แบบ implicit (ทำเมื่อ detect change)
             }
         }
         .padding()
@@ -38,7 +62,7 @@ struct CodeBreakerView: View {
     
     var guessButton: some View {
         Button("Guess") {
-            withAnimation {
+            withAnimation(.easeInOut(duration: 3)) {
                 selection = 0
                 game.attemptGuess()
             }
@@ -53,19 +77,19 @@ struct CodeBreakerView: View {
         static let scaleFactor = minimumFontSize / maximumFontSize
     }
     
-    func view(for code: Code) -> some View {
-        return HStack {
-            // &selection เพราะใน CodeView ใช้เป็น Binding
-            CodeView(code: code, selection: $selection)
-            
-            MatchMarkers(matches: code.matches)
-                .overlay {
-                    if code.kind == .guess {
-                        guessButton
-                    }
-                }
-        }
-    }
+//    func view(for code: Code) -> some View {
+//        return HStack {
+//            // $selection เพราะใน CodeView ใช้เป็น Binding
+//            CodeView(code: code, selection: $selection)
+//            
+//            MatchMarkers(matches: code.matches)
+//                .overlay {
+//                    if code.kind == .guess {
+//                        guessButton
+//                    }
+//                }
+//        }
+//    }
 }
 
 
