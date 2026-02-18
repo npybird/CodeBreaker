@@ -16,12 +16,12 @@ struct PegView: View {
         let pegShape = Circle() // RoundedRectangle(cornerRadius: 10)
         
         pegShape
-               .overlay {
-                   if peg == Code.missing {
-                        pegShape
-                            .strokeBorder(.gray)
-                    }
-                }
+//               .overlay {
+//                   if peg == Code.missing {
+//                        pegShape
+//                            .strokeBorder(.gray)
+//                    }
+//                }
                 .contentShape(pegShape)
                 .aspectRatio(1, contentMode: .fit)
                 .foregroundStyle(peg)
