@@ -12,7 +12,7 @@ struct PegChooserView: View {
     let choices: [Peg]
     
     // MARK: Data Out Function
-    let onChoose: (Peg) -> Void
+    var onChoose: ((Peg) -> Void)?
     
     // MARK: - body
     var body: some View {
@@ -20,7 +20,7 @@ struct PegChooserView: View {
             ForEach(choices, id: \.self) { peg in
                 PegView(peg: peg)
                     .onTapGesture {
-                        onChoose(peg)
+                        onChoose?(peg)
                     }
             }
         }

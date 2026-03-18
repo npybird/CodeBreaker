@@ -8,8 +8,10 @@
 import SwiftUI
 
 struct CodeBreakerView: View {
+    // MARK: Data Shared with Me
+    let game: CodeBreaker
+    
     // MARK: Data Owned by Me
-    @State private var game: CodeBreaker = CodeBreaker()
     @State private var selection: Int = 0
     @State private var restarting = false
     @State private var hideMostRecentMarkers = false
@@ -17,28 +19,7 @@ struct CodeBreakerView: View {
     // MARK: - body
     var body: some View {
         VStack {
-            Button("Restart") {
-                withAnimation(.restart) {    // animation แบบ explicit (ทำทันที)
-                    restarting = true
-                    game.restart()
-                } completion: {     // เมื่อทำ animation เสร็จ
-                    withAnimation(.restart) {
-                        restarting = false
-                    }
-                }
-            }
-            
-            CodeView(code: game.masterCode) {
-                ElapsedTime(
-                    startTime: game.startTime,
-                    endTime: game.endTime
-                )
-                .flexibleSystemFont()
-                .monospaced()
-                .lineLimit(1)
-            }
-            //                .opacity(game.isOver ? 1 : 0)
-            
+            CodeView(code: game.masterCode)
             ScrollView {
                 if !game.isOver {
                     CodeView(code: game.guess, selection: $selection) {
@@ -48,12 +29,12 @@ struct CodeBreakerView: View {
                     .opacity(restarting ? 0 : 1)
                 }
                 
-                ForEach(game.attempts.indices.reversed(), id: \.self) { index in
-                    CodeView(code: game.attempts[index]) {
-                        let showMarkers = !hideMostRecentMarkers || index != game.attempts.count - 1
+                ForEach(game.attempts, id: \.pegs) { attempt in
+                    CodeView(code: attempt) {
+                        let showMarkers = !hideMostRecentMarkers || attempt.pegs != game.attempts.first?.pegs
                         
                         if showMarkers {
-                            MatchMarkers(matches: game.attempts[index].matches)
+                            MatchMarkers(matches: attempt.matches)
                         }
                     }
                     .transition(.attempt(game.isOver))
@@ -66,6 +47,29 @@ struct CodeBreakerView: View {
                     selection = (selection + 1) % game.guess.pegs.count
                 }
                 .transition(AnyTransition.pegChooser)     // animation แบบ implicit (ทำเมื่อ detect change)
+            }
+        }
+        .toolbar {
+            ToolbarItem(placement: .primaryAction) {
+                Button("Restart", systemImage: "arrow.circlepath") {    // ใส่ icon ไปกับปุ่ม
+                    withAnimation(.restart) {    // animation แบบ explicit (ทำทันที)
+                        restarting = true
+                        game.restart()
+                    } completion: {     // เมื่อทำ animation เสร็จ
+                        withAnimation(.restart) {
+                            restarting = false
+                        }
+                    }
+                }
+            }
+            ToolbarItem(placement: .automatic) {
+                ElapsedTime(
+                    startTime: game.startTime,
+                    endTime: game.endTime
+                )
+                .flexibleSystemFont()
+                .monospaced()
+                .lineLimit(1)
             }
         }
         .padding()
@@ -85,13 +89,13 @@ struct CodeBreakerView: View {
         }
         .flexibleSystemFont()
     }
-    
+}
+
 //    struct GuessButton {
 //        static let maximumFontSize: CGFloat = 80
 //        static let minimumFontSize: CGFloat = 8
 //        static let scaleFactor = minimumFontSize / maximumFontSize
 //    }
-}
     
 //    func view(for code: Code) -> some View {
 //        return HStack {
@@ -109,7 +113,11 @@ struct CodeBreakerView: View {
 
 
 #Preview {
-    CodeBreakerView()
-        .padding()
+        @Previewable @State var game = CodeBreaker(name: "Preview", pegChoices: [.blue, .red, .green, .orange])
+        
+    NavigationStack {
+        CodeBreakerView(game: game)
+            .padding()
+    }
 }
     
