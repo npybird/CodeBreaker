@@ -46,6 +46,7 @@ struct CodeBreakerView: View {
                     game.setGuessPeg(peg, at: selection)
                     selection = (selection + 1) % game.guess.pegs.count
                 }
+                .frame(maxHeight: 80)
                 .transition(AnyTransition.pegChooser)     // animation แบบ implicit (ทำเมื่อ detect change)
             }
         }

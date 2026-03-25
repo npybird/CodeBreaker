@@ -8,17 +8,26 @@
 import SwiftUI
 
 struct GameChooserView: View {
+    // MARK: Data Owned by Me
     @State private var games: [CodeBreaker] = []
     
+    @State private var gameToEdit: CodeBreaker?
+    @State private var showGameEditor = false
+    
+    // MARK: - Body
     var body: some View {
-        NavigationStack {
+        NavigationSplitView {
             List {
-                ForEach(games, id: \.name) { game in
+                ForEach(games, id:\.name) {game in
                     NavigationLink(value: game) {
                         GameSummaryView(game: game)
                     }
-                    NavigationLink(value: game.masterCode.pegs) {
-                        Text("Cheat 🤫")
+                    .contextMenu {
+                        editButton(for: game) // editing a game
+                        deleteButton(for: game)
+                    }
+                    .swipeActions(edge: .leading) {
+                        editButton(for: game).tint(.accentColor)
                     }
                 }
                 .onDelete { offsets in
@@ -30,19 +39,50 @@ struct GameChooserView: View {
             }
             .listStyle(.plain)
             .toolbar {
-                EditButton()
+                addButton
+                EditButton() // edit list of game
             }
             .navigationDestination(for: CodeBreaker.self) { game in
                 CodeBreakerView(game: game)
             }
-            .navigationDestination(for: [Peg].self) { pegs in
-                PegChooserView(choices: pegs)
-            }
+        } detail: {
+            Text("Please Choose a Game")
         }
         .onAppear {
             games.append(CodeBreaker(name: "Mastermind", pegChoices: [.red, .blue, .green, .yellow]))
             games.append(CodeBreaker(name: "Earth Tones", pegChoices: [.orange, .brown, .black, .yellow, .green]))
             games.append(CodeBreaker(name: "Undersea", pegChoices: [.blue, .indigo, .cyan]))
+        }
+    }
+    
+    func editButton(for game: CodeBreaker) -> some View {
+        Button("Edit", systemImage: "pencil") {
+            gameToEdit = game
+            showGameEditor = true
+        }
+    }
+    var addButton: some View {
+        Button("Add Game", systemImage: "plus") {
+            gameToEdit = CodeBreaker(name: "New Game", pegChoices: [.red, .green, .blue])
+            showGameEditor = true
+        }
+        .sheet(isPresented: $showGameEditor) {
+            if let gameToEdit {
+                let copyOfGameToEdit = CodeBreaker(name: gameToEdit.name, pegChoices: gameToEdit.pegChoices)
+                GameEditorView(game: copyOfGameToEdit) {
+                    if let index = games.firstIndex(of: gameToEdit) {
+                        games[index] = copyOfGameToEdit
+                    } else {
+                        games.insert(gameToEdit, at: 0)
+                    }
+                }
+            }
+        }
+    }
+    
+    func deleteButton(for game: CodeBreaker) -> some View {
+        Button("Delete", systemImage: "minus.circle", role: .destructive) {
+            games.removeAll { $0 == game }
         }
     }
 }

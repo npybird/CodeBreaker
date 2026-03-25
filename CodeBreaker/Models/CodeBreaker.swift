@@ -17,9 +17,8 @@ typealias Peg = Color
     var guess: Code = Code(kind: .guess, pegs: [Code.missing, Code.missing, Code.missing, Code.missing])
     var attempts: [Code] = []
     var startTime: Date = .now
-    var endTime: Date?
-    
-    let pegChoices: [Peg]
+    var endTime: Date?    
+    var pegChoices: [Peg]
     
     init(name: String = "Code Breaker", pegChoices: [Peg] = [.red, .green, .yellow, .blue, .brown]) {
         self.name = name
@@ -40,6 +39,10 @@ typealias Peg = Color
     var isOver: Bool {
         // ?. คือ ถ้า Array ไม่ใช่ nil จะ unwrapped ให้เอง
         attempts.first?.pegs == masterCode.pegs
+    }
+    
+    var isValid: Bool {
+        !name.isEmpty && Set(pegChoices).count >= 2
     }
     
     func changeGuessPeg(at index: Int) {
