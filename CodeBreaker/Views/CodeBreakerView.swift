@@ -112,9 +112,19 @@ struct CodeBreakerView: View {
 //        }
 //    }
 
+extension CodeBreaker {
+    convenience init(name: String, pegChoices: [Color]) {
+        self.init(name: name, pegChoices: pegChoices.map(\.hex))
+    }
+    
+    var pegColorChoices: [Color] {
+        get { pegChoices.map { Color(hex: $0) } }
+        set { pegChoices = newValue.map(\.hex) }
+    }
+}
 
-#Preview {
-        @Previewable @State var game = CodeBreaker(name: "Preview", pegChoices: [.blue, .red, .green, .orange])
+#Preview(traits: .swiftData) {
+    @Previewable @State var game = CodeBreaker(name: "Preview", pegChoices: [.blue, .red, .green, .orange])
         
     NavigationStack {
         CodeBreakerView(game: game)

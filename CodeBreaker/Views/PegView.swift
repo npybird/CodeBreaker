@@ -24,11 +24,11 @@ struct PegView: View {
 //                }
                 .contentShape(pegShape)
                 .aspectRatio(1, contentMode: .fit)
-                .foregroundStyle(peg)
+                .foregroundStyle(Color(hex: peg))
     }
 }
 
 #Preview {
-    PegView(peg: .red)
+    PegView(peg: Color.red.hex)
         .padding()
 }

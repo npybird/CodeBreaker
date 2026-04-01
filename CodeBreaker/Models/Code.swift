@@ -7,12 +7,23 @@
 
 
 import Foundation
+import SwiftData
 
-struct Code {
-    var kind: Kind
-    var pegs: [Peg] = Array(repeating: Code.missing, count: 4)
+@Model class Code {
+    var _kind: String = Kind.unknown.description()
+    var pegs: [Peg]
     
-    static let missing: Peg = .clear
+    var kind: Kind {
+        get { return Kind(from: _kind) }
+        set { _kind = newValue.description()}
+    }
+    
+    init(kind: Kind, pegs: [Peg] = Array(repeating: Code.missing, count: 4)) {
+        self.pegs = pegs
+        self.kind = kind
+    }
+    
+    static let missing: Peg = ""
     
     enum Kind: Equatable {
         case master(isHidden: Bool)
@@ -21,14 +32,14 @@ struct Code {
         case unknown
     }
     
-    mutating func randomize(from pegChoices: [Peg]) {
+    func randomize(from pegChoices: [Peg]) {
         for index in pegs.indices {
             pegs[index] = pegChoices.randomElement() ?? Code.missing
         }
         print(pegs)
     }
     
-    mutating func reset() {
+    func reset() {
         pegs = Array(repeating: Code.missing, count: 4)
     }
     
@@ -86,5 +97,67 @@ struct Code {
 //        }
         
 //        return results
+    }
+}
+
+enum Match: String, Equatable {
+    case nomatch
+    case exact
+    case inexact
+}
+
+extension Code.Kind {
+    func description() -> String {
+        switch self {
+        case .master(let isHidden):
+            return "master:\(isHidden)"
+            
+        case .guess:
+            return "guess"
+            
+        case .attempt(let matches):
+            let values = matches.map { $0.rawValue }.joined(separator: ",")
+            return "attempt:\(values)"
+            
+        case .unknown:
+            return "unknown"
+        }
+    }
+    
+    init(from string: String) {
+        let parts = string.split(separator: ":", maxSplits: 1).map(String.init)
+        
+        guard let type = parts.first else {
+            self = .unknown
+            return
+        }
+        
+        switch type {
+        case "master":
+            if parts.count > 1, let value = Bool(parts[1]) {
+                self = .master(isHidden: value)
+            } else {
+                self = .unknown
+            }
+            
+        case "guess":
+            self = .guess
+            
+        case "attempt":
+            if parts.count > 1 {
+                let matches = parts[1]
+                    .split(separator: ",")
+                    .compactMap { Match(rawValue: String($0)) }
+                self = .attempt(matches)
+            } else {
+                self = .attempt([])
+            }
+            
+        case "unknown":
+            self = .unknown
+            
+        default:
+            self = .unknown
+        }
     }
 }

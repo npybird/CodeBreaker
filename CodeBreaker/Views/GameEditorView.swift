@@ -26,21 +26,7 @@ struct GameEditorView: View {
                     TextField("Name", text: $game.name)
                 }
                 Section("Pegs") {
-                    List {
-                        ForEach(game.pegChoices.indices, id:\.self) { index in
-                            ColorPicker(
-                                selection: $game.pegChoices[index],
-                                supportsOpacity: false
-                            ) {
-                                button("Peg Choice \(index+1)", systemImage: "minus.circle", color: .red) {
-                                    game.pegChoices.remove(at: index)
-                                }
-                            }
-                        }
-                        button("Add Peg", systemImage: "plus.circle", color: .green) {
-                            game.pegChoices.append(.red)
-                        }
-                    }
+                    PegChoicesChooserView(pegChoices: $game.pegColorChoices)
                 }
             }
             .toolbar {
@@ -67,25 +53,9 @@ struct GameEditorView: View {
             }
         }
     }
-    
-    func button(
-        _ title: String,
-        systemImage: String,
-        color: Color,
-        action: @escaping () -> Void
-    ) -> some View {
-        HStack {
-            Button {
-                action()
-            } label: {
-                Image(systemName: systemImage).tint(color)
-            }
-            Text(title)
-        }
-    }
 }
 
-#Preview {
+#Preview(traits: .swiftData) {
     @Previewable var game = CodeBreaker(name: "Preview", pegChoices: [.red, .blue])
     GameEditorView(game: game) {
         print("game name changed to \(game.name)")
