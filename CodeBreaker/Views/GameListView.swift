@@ -6,12 +6,32 @@
 //
 
 import SwiftUI
+import SwiftData
 
 struct GameListView: View {
+    // MARK: Data In
+    @Environment(\.modelContext) var modelContext
+    
     // MARK: Data Owned by Me
-    @State private var games: [CodeBreaker] = []
+//    @State private var games: [CodeBreaker] = []
     @State private var showGameEditor = false
     @State private var gameToEdit: CodeBreaker?
+    
+    @Query(sort: \CodeBreaker.name, order: .forward) private var games: [CodeBreaker]
+    
+    init(sortBy: CodeBreaker.SortOption = .name, nameContains search: String = "") {
+        let lowercaseSearch = search.lowercased()
+        let capitalizeSearch = search.capitalized
+        
+        let predicate = #Predicate<CodeBreaker> { game in
+            return search.isEmpty || game.name.contains(lowercaseSearch) || game.name.contains(capitalizeSearch)
+        }
+        
+        switch sortBy {
+        case .name: _games = Query(filter: predicate, sort: \CodeBreaker.name, order: .forward)
+        case .recent: _games = Query(filter: predicate, sort: \CodeBreaker.lastAttemptDate, order: .reverse)
+        }
+    }
     
     var body: some View {
         List {
@@ -28,10 +48,9 @@ struct GameListView: View {
                 }
             }
             .onDelete { offsets in
-                games.remove(atOffsets: offsets)
-            }
-            .onMove { offsets, destination in
-                games.move(fromOffsets: offsets, toOffset: destination)
+                for offset in offsets {
+                    modelContext.delete(games[offset])
+                }
             }
         }
         .listStyle(.plain)
@@ -49,9 +68,9 @@ struct GameListView: View {
     
     func addSampleGames() {
         if games.isEmpty {
-            games.append(CodeBreaker(name: "Mastermind", pegChoices: [.red, .blue, .green, .yellow]))
-            games.append(CodeBreaker(name: "Earth Tones", pegChoices: [.orange, .brown, .black, .yellow, .green]))
-            games.append(CodeBreaker(name: "Undersea", pegChoices: [.blue, .indigo, .cyan]))
+            modelContext.insert(CodeBreaker(name: "Mastermind", pegChoices: [.red, .blue, .green, .yellow]))
+            modelContext.insert(CodeBreaker(name: "Earth Tones", pegChoices: [.orange, .brown, .black, .yellow, .green]))
+            modelContext.insert(CodeBreaker(name: "Undersea", pegChoices: [.blue, .indigo, .cyan]))
         }
     }
     
@@ -80,11 +99,10 @@ struct GameListView: View {
         if let gameToEdit {
             let copyOfGameToEdit = CodeBreaker(name: gameToEdit.name, pegChoices: gameToEdit.pegChoices)
             GameEditorView(game: copyOfGameToEdit) {
-                if let index = games.firstIndex(of: gameToEdit) {
-                    games[index] = copyOfGameToEdit
-                } else {
-                    games.insert(copyOfGameToEdit, at: 0)
+                if games.contains(gameToEdit) {
+                    modelContext.delete(gameToEdit)
                 }
+                modelContext.insert(copyOfGameToEdit)
             }
         }
     }
@@ -92,7 +110,7 @@ struct GameListView: View {
     func deleteButton(for game: CodeBreaker) -> some View {
         Button("Delete", systemImage: "minus.circle", role: .destructive) {
             withAnimation {
-                games.removeAll { $0 == game }
+                modelContext.delete(game)
             }
         }
     }
